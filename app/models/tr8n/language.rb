@@ -35,6 +35,10 @@ class Tr8n::Language < ActiveRecord::Base
   has_many :translations,           :class_name => 'Tr8n::Translation',         :dependent => :destroy
   has_many :translation_key_locks,  :class_name => 'Tr8n::TranslationKeyLock',  :dependent => :destroy
   has_many :language_metrics,       :class_name => 'Tr8n::LanguageMetric'
+
+  has_and_belongs_to_many :iso_countries, :class_name => 'Tr8n::IsoCountry', :foreign_key => "tr8n_language_id", :association_foreign_key=>"tr8n_iso_country_id",  :join_table=>"tr8n_iso_countries_tr8n_languages"
+
+  belongs_to :fallback_language,    :class_name => 'Tr8n::Language', :foreign_key => :fallback_language_id
   
   def self.find_or_create(lcl, english_name)
     find_by_locale(lcl) || create(:locale => lcl, :english_name => english_name) 
