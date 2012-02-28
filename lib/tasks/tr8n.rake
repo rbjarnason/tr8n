@@ -23,6 +23,14 @@
 
 require 'csv'
 
+def tr8n_db_path
+    Rails.root.join("db/tr8n")
+end
+
+def tr8n_db_filename
+    tr8n_db_path.join("tr8n.sql.gz")
+end
+
 def tr8n_source_filename
   tr8n_db_path.join("sources.json")
 end
@@ -191,5 +199,39 @@ namespace :tr8n do
       sources << translation_source.source unless translation_source.source.downcase.include?("tr8n")
     end
     puts "[#{sources.sort.map {|s| "\"#{s}\""}.join(",")}]"
+  end
+
+    desc "Dump tr8n tables"
+  task :dump_db => :environment do
+    config = Rails.application.config.database_configuration
+    current_config = config[Rails.env]
+    abort "db is not mysql" unless current_config['adapter'] =~ /mysql/
+
+    database = current_config['database']
+    user = current_config['username']
+    password = current_config['password']
+
+    tr8n_tables = ActiveRecord::Base.connection.tables.find_all {|t| t.include?("tr8n_") }.join(" ")
+    FileUtils.mkdir_p(tr8n_db_path)
+    command = "mysqldump --add-drop-table -u #{user} --password=#{password} #{database} #{tr8n_tables} | gzip > #{tr8n_db_filename}"
+    puts "Excuting: #{command}"
+    system command
+  end
+
+  desc "Import tr8n tables"
+  task :import_db => :environment do
+    config = Rails.application.config.database_configuration
+    current_config = config[Rails.env]
+    abort "db is not mysql" unless current_config['adapter'] =~ /mysql/
+
+    database = current_config['database']
+    user = current_config['username']
+    password = current_config['password']
+
+    tr8n_table = ActiveRecord::Base.connection.tables.find_all {|t| t.include?("tr8n_") }.join(" ")
+    abort "TR8N import file does not exist" unless File.exists?(tr8n_db_filename)
+    command = "gunzip < #{tr8n_db_filename} | mysql -u #{user} --password=#{password} #{database}"
+    puts "Excuting: #{command}"
+    system command
   end
 end
