@@ -130,7 +130,7 @@ namespace :tr8n do
   task :import_and_setup_iso_3166 => :environment do
     iso_countries = []
     country_languages = []
-    CSV.parse(File.open(Rails.root.join("docs/geoip_iso_3166.csv"))) do |row|
+    CSV.parse(File.open(Tr8n::Engine.root.join("docs/geoip_iso_3166.csv"))) do |row|
       unless Tr8n::IsoCountry.find_by_code(row[0].strip)
         iso_countries << Tr8n::IsoCountry.create(:code=>row[0].strip, :country_english_name=>row[1].strip)
       else
@@ -138,7 +138,7 @@ namespace :tr8n do
       end
     end
 
-    CSV.parse(File.open(Rails.root.join("docs/countries_lang.csv"))) do |row|
+    CSV.parse(File.open(Tr8n::Engine.root.join("docs/countries_lang.csv"))) do |row|
       country_languages << CountryLang.new(row[0].strip, row[1].strip) unless row[0]==""
     end
 
